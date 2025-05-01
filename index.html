@@ -1,211 +1,167 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Minecraft Skins</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background-color: #1e1e1e;
-      color: #fff;
+      color: white;
       margin: 0;
       padding: 0;
     }
-
     header {
-      background-color: #111;
-      padding: 20px;
-      font-size: 24px;
+      padding: 1rem;
+      text-align: center;
+      background-color: #282828;
+      font-size: 1.5rem;
     }
-
-    .container {
-      padding: 20px;
-    }
-
-    .skin-grid {
+    .gallery {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+      padding: 10px;
     }
-
     .skin-item {
-      background: #2e2e2e;
-      border-radius: 6px;
+      background-color: #2e2e2e;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
       cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px;
-      aspect-ratio: 1 / 1;
     }
-
     .skin-item img {
-      width: 100%;
-      height: auto;
-      object-fit: cover;
-      flex-grow: 1;
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      image-rendering: pixelated;
     }
-
-    #upload-section {
-      margin-bottom: 25px;
-      background: #333;
-      padding: 12px;
-      border-radius: 6px;
-    }
-
-    #preview-modal {
+    #modal {
+      display: none;
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0,0,0,0.85);
-      display: none;
-      align-items: center;
+      background-color: rgba(0, 0, 0, 0.8);
       justify-content: center;
-      z-index: 100;
-    }
-
-    #preview-content {
-      background: #222;
-      padding: 20px;
-      border-radius: 8px;
-      display: flex;
-      flex-direction: row;
       align-items: center;
+      z-index: 1000;
+    }
+    #modal-content {
+      background-color: #333;
+      padding: 20px;
+      border-radius: 10px;
+      display: flex;
       gap: 20px;
-      max-width: 90vw;
+      align-items: center;
     }
-
     #preview-img {
-      width: 120px;
+      width: 128px;
       height: auto;
+      image-rendering: pixelated;
     }
-
-    .button-group {
+    #modal-buttons {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
-
-    .modal-button {
+    button {
       padding: 8px 12px;
+      background-color: #444;
+      color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      font-size: 14px;
-      width: 120px;
     }
-
-    #close-btn {
-      background-color: #555;
-      color: white;
+    button:hover {
+      background-color: #666;
     }
-
-    #download-btn {
-      background-color: #4caf50;
-      color: white;
-    }
-
-    #delete-btn {
-      background-color: #e74c3c;
-      color: white;
+    #upload-container {
+      padding: 1rem;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <header>Minecraft Skins</header>
+  <header>Minecraft Skins Galerie</header>
 
-  <div class="container">
-    <div id="upload-section">
-      <h3>Eigene Skins hochladen (nur Admin)</h3>
-      <input type="file" id="file-input" accept="image/png" />
-      <input type="text" id="skin-name" placeholder="Name eingeben" />
-      <button onclick="uploadSkin()">Hochladen</button>
-    </div>
-
-    <h2>Galerie</h2>
-    <div class="skin-grid" id="skin-grid"></div>
+  <div id="upload-container">
+    <input type="file" id="fileInput" accept="image/png" />
+    <input type="text" id="skinName" placeholder="Name des Skins" />
+    <button onclick="uploadSkin()">Hochladen</button>
   </div>
 
-  <div id="preview-modal">
-    <div id="preview-content">
-      <img id="preview-img" src="" alt="Skin Preview" />
-      <div class="button-group">
-        <a id="download-btn" class="modal-button" href="#" download>Download</a>
-        <button id="delete-btn" class="modal-button" onclick="deleteSkin()" style="display: none;">Löschen</button>
-        <button id="close-btn" class="modal-button" onclick="closeModal()">Schließen</button>
+  <div class="gallery" id="gallery"></div>
+
+  <div id="modal">
+    <div id="modal-content">
+      <img id="preview-img" src="" alt="Skin Preview">
+      <div id="modal-buttons">
+        <div id="preview-name"></div>
+        <button onclick="downloadSkin()">Download</button>
+        <button onclick="deleteSkin()">Löschen</button>
+        <button onclick="closeModal()">Schließen</button>
       </div>
     </div>
   </div>
 
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const isAdmin = urlParams.get('admin') === 'geheim';
-
-    let currentSkinIndex = -1;
-
-    window.onload = () => {
-      if (!isAdmin) {
-        document.getElementById('upload-section').style.display = 'none';
-      }
-
-      const savedSkins = JSON.parse(localStorage.getItem('skins') || '[]');
-      savedSkins.forEach(({ name, data }, index) => addSkinToGallery(name, data, index));
-    };
+    let selectedSkinIndex = null;
 
     function uploadSkin() {
-      const file = document.getElementById('file-input').files[0];
-      const name = document.getElementById('skin-name').value || 'Skin';
+      const input = document.getElementById("fileInput");
+      const name = document.getElementById("skinName").value || "Unbenannt";
 
-      if (file && file.type === 'image/png') {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const dataURL = e.target.result;
-          const skins = JSON.parse(localStorage.getItem('skins') || '[]');
-          skins.push({ name, data: dataURL });
-          localStorage.setItem('skins', JSON.stringify(skins));
-          addSkinToGallery(name, dataURL, skins.length - 1);
+      if (input.files.length === 0) return;
+
+      const file = input.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        const gallery = document.getElementById("gallery");
+        const div = document.createElement("div");
+        div.className = "skin-item";
+
+        const img = document.createElement("img");
+        img.src = e.target.result;
+        img.alt = name;
+
+        div.onclick = function () {
+          selectedSkinIndex = Array.from(gallery.children).indexOf(div);
+          document.getElementById("preview-img").src = e.target.result;
+          document.getElementById("preview-name").textContent = name;
+          document.getElementById("modal").style.display = "flex";
         };
-        reader.readAsDataURL(file);
-      }
-    }
 
-    function addSkinToGallery(name, dataURL, index) {
-      const grid = document.getElementById('skin-grid');
-      const item = document.createElement('div');
-      item.className = 'skin-item';
-      item.innerHTML = `<img src="${dataURL}" alt="${name}" /><div style="margin-top: 4px;">${name}</div>`;
-      item.onclick = () => showPreview(name, dataURL, index);
-      grid.appendChild(item);
-    }
+        div.appendChild(img);
+        gallery.appendChild(div);
 
-    function showPreview(name, dataURL, index) {
-      currentSkinIndex = index;
-      document.getElementById('preview-img').src = dataURL;
+        input.value = "";
+        document.getElementById("skinName").value = "";
+      };
 
-      const downloadBtn = document.getElementById('download-btn');
-      downloadBtn.href = dataURL;
-      downloadBtn.download = `${name}.png`;
-
-      const deleteBtn = document.getElementById('delete-btn');
-      deleteBtn.style.display = isAdmin ? 'inline-block' : 'none';
-
-      document.getElementById('preview-modal').style.display = 'flex';
+      reader.readAsDataURL(file);
     }
 
     function closeModal() {
-      document.getElementById('preview-modal').style.display = 'none';
+      document.getElementById("modal").style.display = "none";
+    }
+
+    function downloadSkin() {
+      const link = document.createElement("a");
+      link.href = document.getElementById("preview-img").src;
+      link.download = document.getElementById("preview-name").textContent + ".png";
+      link.click();
     }
 
     function deleteSkin() {
-      if (!isAdmin || currentSkinIndex === -1) return;
-      const skins = JSON.parse(localStorage.getItem('skins') || '[]');
-      skins.splice(currentSkinIndex, 1);
-      localStorage.setItem('skins', JSON.stringify(skins));
-      location.reload();
+      if (selectedSkinIndex !== null) {
+        const gallery = document.getElementById("gallery");
+        gallery.removeChild(gallery.children[selectedSkinIndex]);
+        closeModal();
+      }
     }
   </script>
 </body>
