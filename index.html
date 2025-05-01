@@ -22,26 +22,34 @@
 
     #skinGrid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
     }
 
     .skinItem {
-      width: 80px;
-      height: 80px;
+      width: 160px;
+      height: 160px;
       overflow: hidden;
       background: #222;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
+      justify-content: center;
       border-radius: 8px;
       cursor: pointer;
     }
 
     .skinItem img {
-      height: 100%;
+      max-height: 128px;
       width: auto;
       object-fit: contain;
+      margin-bottom: 4px;
+    }
+
+    .skinItem span {
+      font-size: 0.9rem;
+      color: #ccc;
+      text-align: center;
     }
 
     /* Modal */
@@ -98,7 +106,6 @@
   </style>
 </head>
 <body>
-
   <h1>Minecraft Skins</h1>
 
   <!-- Nur du siehst das hier -->
@@ -136,11 +143,11 @@
     const deleteBtn = document.getElementById("deleteBtn");
 
     let currentSkinElement = null;
-    const isAdmin = true; // <-- Nur DU darfst löschen/hochladen
+    const isAdmin = true; // Nur für dich
 
     function uploadSkin() {
       const file = skinInput.files[0];
-      const name = skinNameInput.value || "Unbenannt";
+      const name = skinNameInput.value.trim() || "Unbenannt";
 
       if (!file || file.type !== "image/png") {
         alert("Bitte wähle eine PNG-Datei aus.");
@@ -154,7 +161,12 @@
         const img = document.createElement("img");
         img.src = e.target.result;
         img.alt = name;
+
+        const label = document.createElement("span");
+        label.textContent = name;
+
         skinDiv.appendChild(img);
+        skinDiv.appendChild(label);
         skinDiv.dataset.name = name;
         skinDiv.dataset.src = e.target.result;
 
