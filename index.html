@@ -15,25 +15,27 @@
     }
     h1 {
       padding: 20px;
+      font-size: 2.5em;
     }
     #uploadSection {
       display: none;
       margin: 20px auto;
     }
     input[type="text"], input[type="file"] {
-      padding: 5px;
-      margin: 5px;
+      padding: 10px;
+      margin: 10px;
+      font-size: 1.2em;
     }
     #gallery {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 16px;
+      gap: 24px;
       padding: 20px;
     }
     .skin-box {
-      width: 120px;
-      height: 120px;
+      width: 160px;
+      height: 160px;
       background-color: #222;
       display: flex;
       align-items: center;
@@ -43,8 +45,8 @@
       position: relative;
     }
     .skin-box img {
-      width: 96px;
-      height: 48px;
+      width: 128px;
+      height: 64px;
       object-fit: contain;
     }
     .modal {
@@ -66,8 +68,8 @@
       gap: 20px;
     }
     .modal-content img {
-      width: 128px;
-      height: 64px;
+      width: 256px;
+      height: 128px;
       object-fit: contain;
       background: #333;
     }
@@ -199,7 +201,7 @@
     }
 
     window.onload = () => {
-      if (isAdmin) uploadSection.style.display = "block";
+      if (isAdmin) uploadSection.style.display = "block"; // Admin-Uploadbereich anzeigen
       renderGallery();
     };
   </script>
