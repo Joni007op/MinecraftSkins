@@ -1,206 +1,180 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Minecraft Skins</title>
   <style>
     body {
       font-family: sans-serif;
-      background: #111;
-      color: #fff;
-      margin: 0;
-      padding: 0;
+      background-color: #111;
+      color: white;
       text-align: center;
+      margin: 0;
     }
     h1 {
+      margin-top: 20px;
+    }
+    #uploadForm {
+      margin: 20px;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
       padding: 20px;
     }
-    #uploadSection {
-      display: none;
-      margin: 20px auto;
-    }
-    input[type="text"], input[type="file"] {
-      padding: 5px;
-      margin: 5px;
-    }
-    #gallery {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 16px;
-      padding: 20px;
-    }
-    .skin-box {
-      width: 80px;
-      height: 80px;
-      background-color: #222;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .skin-item {
+      background: #222;
+      padding: 10px;
       border-radius: 8px;
-      cursor: pointer;
-      position: relative;
     }
-    .skin-box img {
-      width: 64px;
-      height: 32px;
+    .skin-item img {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1 / 1;
       object-fit: contain;
     }
+    .skin-name {
+      margin-top: 5px;
+    }
     .modal {
-      display: none;
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.9);
+      display: none;
       justify-content: center;
       align-items: center;
-      z-index: 999;
+      z-index: 100;
     }
     .modal-content {
       background: #222;
       padding: 20px;
-      border-radius: 10px;
       display: flex;
       align-items: center;
       gap: 20px;
+      border-radius: 10px;
     }
-    .modal-content img {
-      width: 128px;
-      height: 64px;
-      object-fit: contain;
-      background: #333;
+    .modal img {
+      max-height: 200px;
     }
     .modal-buttons {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
       gap: 10px;
     }
-    .modal-buttons button {
-      padding: 6px 12px;
-      cursor: pointer;
+    button {
+      padding: 8px 12px;
+      background-color: #00aaff;
       border: none;
-      border-radius: 4px;
-    }
-    .delete-button {
-      background: #c00;
-      color: #fff;
-    }
-    .download-button {
-      background: #0c0;
-      color: #000;
-    }
-    .close-button {
-      background: #666;
-      color: #fff;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <h1>Minecraft Skins</h1>
 
-  <div id="uploadSection">
-    <input type="text" id="skinNameInput" placeholder="Skin-Name" />
-    <input type="file" id="skinFileInput" accept="image/png" />
-    <button onclick="uploadSkin()">Hochladen</button>
-  </div>
+<h1>Minecraft Skins</h1>
 
-  <div id="gallery"></div>
+<div id="uploadForm" style="display:none;">
+  <input type="file" id="fileInput" accept=".png">
+  <input type="text" id="skinName" placeholder="Skin-Name">
+  <button onclick="uploadSkin()">Skin hochladen</button>
+</div>
 
-  <div id="modal" class="modal" onclick="closeModal(event)">
-    <div class="modal-content" onclick="event.stopPropagation()">
-      <img id="modalImage" />
-      <div class="modal-buttons">
-        <div id="modalSkinName" style="color: white; font-weight: bold;"></div>
-        <button class="download-button" onclick="downloadSkin()">Download</button>
-        <button id="deleteButton" class="delete-button" onclick="deleteSkin()">Löschen</button>
-        <button class="close-button" onclick="closeModal()">Schließen</button>
-      </div>
+<div class="gallery" id="gallery"></div>
+
+<div class="modal" id="skinModal">
+  <div class="modal-content">
+    <img id="modalImage" src="">
+    <div class="modal-buttons">
+      <div id="modalSkinName"></div>
+      <button id="downloadBtn">Download</button>
+      <button id="deleteBtn" style="display:none;">Löschen</button>
+      <button onclick="closeModal()">Schließen</button>
     </div>
   </div>
+</div>
 
-  <script>
-    const isAdmin = true; // Nur du: Stelle sicher, dass du die Datei lokal editierst
-    const uploadSection = document.getElementById("uploadSection");
-    const gallery = document.getElementById("gallery");
-    const modal = document.getElementById("modal");
-    const modalImage = document.getElementById("modalImage");
-    const modalSkinName = document.getElementById("modalSkinName");
-    const deleteButton = document.getElementById("deleteButton");
+<script>
+  const username = 'Joni007OP';
+  const isAdmin = window.location.search.includes(`admin=1`);
 
-    let currentSkinIndex = null;
+  const uploadForm = document.getElementById('uploadForm');
+  const gallery = document.getElementById('gallery');
+  const modal = document.getElementById('skinModal');
+  const modalImage = document.getElementById('modalImage');
+  const modalSkinName = document.getElementById('modalSkinName');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const deleteBtn = document.getElementById('deleteBtn');
 
-    function uploadSkin() {
-      const name = document.getElementById("skinNameInput").value.trim();
-      const fileInput = document.getElementById("skinFileInput");
-      const file = fileInput.files[0];
-      if (!name || !file) return;
+  let skins = JSON.parse(localStorage.getItem('skins') || '[]');
+  let currentSkinIndex = null;
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-        skins.push({ name, data: reader.result });
-        localStorage.setItem("skins", JSON.stringify(skins));
-        renderGallery();
-        fileInput.value = "";
-        document.getElementById("skinNameInput").value = "";
-      };
-      reader.readAsDataURL(file);
-    }
+  if (isAdmin) uploadForm.style.display = 'block';
 
-    function renderGallery() {
-      gallery.innerHTML = "";
-      const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-      skins.forEach((skin, index) => {
-        const div = document.createElement("div");
-        div.className = "skin-box";
-        const img = document.createElement("img");
-        img.src = skin.data;
-        img.alt = skin.name;
-        div.appendChild(img);
-        div.onclick = () => openModal(index);
-        gallery.appendChild(div);
-      });
-    }
+  function renderSkins() {
+    gallery.innerHTML = '';
+    skins.forEach((skin, index) => {
+      const div = document.createElement('div');
+      div.className = 'skin-item';
+      div.innerHTML = `
+        <img src="${skin.data}" onclick="openModal(${index})">
+        <div class="skin-name">${skin.name}</div>
+      `;
+      gallery.appendChild(div);
+    });
+  }
 
-    function openModal(index) {
-      const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-      const skin = skins[index];
-      modalImage.src = skin.data;
-      modalSkinName.innerText = skin.name;
-      modal.style.display = "flex";
-      currentSkinIndex = index;
-      deleteButton.style.display = isAdmin ? "block" : "none";
-    }
+  function uploadSkin() {
+    const fileInput = document.getElementById('fileInput');
+    const nameInput = document.getElementById('skinName');
+    const file = fileInput.files[0];
+    if (!file || !nameInput.value) return;
 
-    function closeModal() {
-      modal.style.display = "none";
-    }
-
-    function deleteSkin() {
-      const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-      if (currentSkinIndex !== null) {
-        skins.splice(currentSkinIndex, 1);
-        localStorage.setItem("skins", JSON.stringify(skins));
-        renderGallery();
-        closeModal();
-      }
-    }
-
-    function downloadSkin() {
-      const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-      const skin = skins[currentSkinIndex];
-      const a = document.createElement("a");
-      a.href = skin.data;
-      a.download = skin.name + ".png";
-      a.click();
-    }
-
-    window.onload = () => {
-      if (isAdmin) uploadSection.style.display = "block";
-      renderGallery();
+    const reader = new FileReader();
+    reader.onload = () => {
+      skins.push({ name: nameInput.value, data: reader.result });
+      localStorage.setItem('skins', JSON.stringify(skins));
+      renderSkins();
+      nameInput.value = '';
+      fileInput.value = '';
     };
-  </script>
+    reader.readAsDataURL(file);
+  }
+
+  function openModal(index) {
+    currentSkinIndex = index;
+    const skin = skins[index];
+    modalImage.src = skin.data;
+    modalSkinName.textContent = skin.name;
+    downloadBtn.onclick = () => {
+      const link = document.createElement('a');
+      link.href = skin.data;
+      link.download = `${skin.name}.png`;
+      link.click();
+    };
+    if (isAdmin) {
+      deleteBtn.style.display = 'block';
+      deleteBtn.onclick = () => {
+        skins.splice(index, 1);
+        localStorage.setItem('skins', JSON.stringify(skins));
+        closeModal();
+        renderSkins();
+      };
+    } else {
+      deleteBtn.style.display = 'none';
+    }
+    modal.style.display = 'flex';
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+  }
+
+  renderSkins();
+</script>
+
 </body>
 </html>
