@@ -12,43 +12,49 @@
       margin: 0;
       padding: 0;
     }
+
     header {
       background-color: #111;
       padding: 20px;
-      text-align: left;
       font-size: 24px;
     }
+
     .container {
       padding: 20px;
     }
+
     .skin-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      gap: 10px;
+      gap: 12px;
     }
+
     .skin-item {
       background: #2e2e2e;
-      padding: 5px;
       border-radius: 6px;
       cursor: pointer;
-      text-align: center;
-      aspect-ratio: 1 / 1;
       display: flex;
       flex-direction: column;
+      align-items: center;
       justify-content: space-between;
+      padding: 6px;
+      aspect-ratio: 1 / 1;
     }
+
     .skin-item img {
       width: 100%;
       height: auto;
-      object-fit: contain;
+      object-fit: cover;
       flex-grow: 1;
     }
+
     #upload-section {
       margin-bottom: 25px;
       background: #333;
       padding: 12px;
       border-radius: 6px;
     }
+
     #preview-modal {
       position: fixed;
       top: 0;
@@ -59,8 +65,9 @@
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 10;
+      z-index: 100;
     }
+
     #preview-content {
       background: #222;
       padding: 20px;
@@ -68,18 +75,21 @@
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: 30px;
+      gap: 20px;
       max-width: 90vw;
     }
+
     #preview-img {
-      width: 150px;
+      width: 120px;
       height: auto;
     }
+
     .button-group {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
+
     .modal-button {
       padding: 8px 12px;
       border: none;
@@ -88,14 +98,17 @@
       font-size: 14px;
       width: 120px;
     }
+
     #close-btn {
       background-color: #555;
       color: white;
     }
+
     #download-btn {
       background-color: #4caf50;
       color: white;
     }
+
     #delete-btn {
       background-color: #e74c3c;
       color: white;
@@ -103,12 +116,11 @@
   </style>
 </head>
 <body>
-  <header>
-    Minecraft Skins
-  </header>
+  <header>Minecraft Skins</header>
+
   <div class="container">
     <div id="upload-section">
-      <h3>Eigene Skins hochladen (nur für dich sichtbar)</h3>
+      <h3>Eigene Skins hochladen (nur Admin)</h3>
       <input type="file" id="file-input" accept="image/png" />
       <input type="text" id="skin-name" placeholder="Name eingeben" />
       <button onclick="uploadSkin()">Hochladen</button>
@@ -145,10 +157,8 @@
     };
 
     function uploadSkin() {
-      const input = document.getElementById('file-input');
-      const nameInput = document.getElementById('skin-name');
-      const file = input.files[0];
-      const name = nameInput.value || 'Skin';
+      const file = document.getElementById('file-input').files[0];
+      const name = document.getElementById('skin-name').value || 'Skin';
 
       if (file && file.type === 'image/png') {
         const reader = new FileReader();
@@ -167,7 +177,7 @@
       const grid = document.getElementById('skin-grid');
       const item = document.createElement('div');
       item.className = 'skin-item';
-      item.innerHTML = `<img src="${dataURL}" alt="${name}" /><div>${name}</div>`;
+      item.innerHTML = `<img src="${dataURL}" alt="${name}" /><div style="margin-top: 4px;">${name}</div>`;
       item.onclick = () => showPreview(name, dataURL, index);
       grid.appendChild(item);
     }
@@ -175,10 +185,14 @@
     function showPreview(name, dataURL, index) {
       currentSkinIndex = index;
       document.getElementById('preview-img').src = dataURL;
+
       const downloadBtn = document.getElementById('download-btn');
       downloadBtn.href = dataURL;
       downloadBtn.download = `${name}.png`;
-      document.getElementById('delete-btn').style.display = isAdmin ? 'inline-block' : 'none';
+
+      const deleteBtn = document.getElementById('delete-btn');
+      deleteBtn.style.display = isAdmin ? 'inline-block' : 'none';
+
       document.getElementById('preview-modal').style.display = 'flex';
     }
 
