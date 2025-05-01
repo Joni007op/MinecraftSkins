@@ -24,15 +24,14 @@
     .skin-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      gap: 12px;
+      gap: 10px;
     }
     .skin-item {
       background: #2e2e2e;
-      padding: 6px;
+      padding: 5px;
       border-radius: 6px;
       cursor: pointer;
       text-align: center;
-      width: 100%;
       aspect-ratio: 1 / 1;
       display: flex;
       flex-direction: column;
@@ -56,7 +55,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.85);
       display: none;
       align-items: center;
       justify-content: center;
@@ -67,21 +66,27 @@
       padding: 20px;
       border-radius: 8px;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
-      gap: 15px;
+      gap: 30px;
       max-width: 90vw;
     }
     #preview-img {
       width: 150px;
       height: auto;
     }
-    #close-btn, #download-btn, #delete-btn {
-      margin: 5px;
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .modal-button {
       padding: 8px 12px;
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      font-size: 14px;
+      width: 120px;
     }
     #close-btn {
       background-color: #555;
@@ -109,17 +114,18 @@
       <button onclick="uploadSkin()">Hochladen</button>
     </div>
 
-    <h2>Beliebte Skins</h2>
+    <h2>Galerie</h2>
     <div class="skin-grid" id="skin-grid"></div>
   </div>
 
   <div id="preview-modal">
     <div id="preview-content">
       <img id="preview-img" src="" alt="Skin Preview" />
-      <h3 id="preview-name">Skin</h3>
-      <a id="download-btn" href="#" download>Download</a>
-      <button id="delete-btn" onclick="deleteSkin()" style="display: none;">Löschen</button>
-      <button id="close-btn" onclick="closeModal()">Schließen</button>
+      <div class="button-group">
+        <a id="download-btn" class="modal-button" href="#" download>Download</a>
+        <button id="delete-btn" class="modal-button" onclick="deleteSkin()" style="display: none;">Löschen</button>
+        <button id="close-btn" class="modal-button" onclick="closeModal()">Schließen</button>
+      </div>
     </div>
   </div>
 
@@ -131,8 +137,7 @@
 
     window.onload = () => {
       if (!isAdmin) {
-        const uploadSection = document.getElementById('upload-section');
-        if (uploadSection) uploadSection.style.display = 'none';
+        document.getElementById('upload-section').style.display = 'none';
       }
 
       const savedSkins = JSON.parse(localStorage.getItem('skins') || '[]');
@@ -169,7 +174,6 @@
 
     function showPreview(name, dataURL, index) {
       currentSkinIndex = index;
-      document.getElementById('preview-name').textContent = name;
       document.getElementById('preview-img').src = dataURL;
       const downloadBtn = document.getElementById('download-btn');
       downloadBtn.href = dataURL;
