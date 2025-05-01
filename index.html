@@ -23,12 +23,12 @@
     }
     .skin-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 15px;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 12px;
     }
     .skin-item {
       background: #2e2e2e;
-      padding: 8px;
+      padding: 6px;
       border-radius: 6px;
       cursor: pointer;
       text-align: center;
@@ -67,16 +67,17 @@
       padding: 20px;
       border-radius: 8px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 20px;
+      gap: 15px;
       max-width: 90vw;
     }
     #preview-img {
       width: 150px;
       height: auto;
     }
-    #close-btn, #download-btn {
-      margin-top: 10px;
+    #close-btn, #download-btn, #delete-btn {
+      margin: 5px;
       padding: 8px 12px;
       border: none;
       border-radius: 5px;
@@ -88,6 +89,10 @@
     }
     #download-btn {
       background-color: #4caf50;
+      color: white;
+    }
+    #delete-btn {
+      background-color: #e74c3c;
       color: white;
     }
   </style>
@@ -111,17 +116,18 @@
   <div id="preview-modal">
     <div id="preview-content">
       <img id="preview-img" src="" alt="Skin Preview" />
-      <div>
-        <h3 id="preview-name">Skin</h3>
-        <a id="download-btn" href="#" download>Download</a><br>
-        <button id="close-btn" onclick="closeModal()">Schließen</button>
-      </div>
+      <h3 id="preview-name">Skin</h3>
+      <a id="download-btn" href="#" download>Download</a>
+      <button id="delete-btn" onclick="deleteSkin()" style="display: none;">Löschen</button>
+      <button id="close-btn" onclick="closeModal()">Schließen</button>
     </div>
   </div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = urlParams.get('admin') === 'geheim';
+
+    let currentSkinIndex = -1;
 
     window.onload = () => {
       if (!isAdmin) {
@@ -130,7 +136,7 @@
       }
 
       const savedSkins = JSON.parse(localStorage.getItem('skins') || '[]');
-      savedSkins.forEach(({ name, data }) => addSkinToGallery(name, data));
+      savedSkins.forEach(({ name, data }, index) => addSkinToGallery(name, data, index));
     };
 
     function uploadSkin() {
@@ -143,37 +149,45 @@
         const reader = new FileReader();
         reader.onload = function(e) {
           const dataURL = e.target.result;
-          const skinData = { name, data: dataURL };
-
           const skins = JSON.parse(localStorage.getItem('skins') || '[]');
-          skins.push(skinData);
+          skins.push({ name, data: dataURL });
           localStorage.setItem('skins', JSON.stringify(skins));
-          addSkinToGallery(name, dataURL);
+          addSkinToGallery(name, dataURL, skins.length - 1);
         };
         reader.readAsDataURL(file);
       }
     }
 
-    function addSkinToGallery(name, dataURL) {
+    function addSkinToGallery(name, dataURL, index) {
       const grid = document.getElementById('skin-grid');
       const item = document.createElement('div');
       item.className = 'skin-item';
       item.innerHTML = `<img src="${dataURL}" alt="${name}" /><div>${name}</div>`;
-      item.onclick = () => showPreview(name, dataURL);
+      item.onclick = () => showPreview(name, dataURL, index);
       grid.appendChild(item);
     }
 
-    function showPreview(name, dataURL) {
+    function showPreview(name, dataURL, index) {
+      currentSkinIndex = index;
       document.getElementById('preview-name').textContent = name;
       document.getElementById('preview-img').src = dataURL;
       const downloadBtn = document.getElementById('download-btn');
       downloadBtn.href = dataURL;
       downloadBtn.download = `${name}.png`;
+      document.getElementById('delete-btn').style.display = isAdmin ? 'inline-block' : 'none';
       document.getElementById('preview-modal').style.display = 'flex';
     }
 
     function closeModal() {
       document.getElementById('preview-modal').style.display = 'none';
+    }
+
+    function deleteSkin() {
+      if (!isAdmin || currentSkinIndex === -1) return;
+      const skins = JSON.parse(localStorage.getItem('skins') || '[]');
+      skins.splice(currentSkinIndex, 1);
+      localStorage.setItem('skins', JSON.stringify(skins));
+      location.reload();
     }
   </script>
 </body>
