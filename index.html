@@ -1,167 +1,197 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Minecraft Skins</title>
+  <meta charset="UTF-8">
+  <title>Minecraft Skin Galerie</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #1e1e1e;
+      font-family: sans-serif;
+      background: #111;
       color: white;
       margin: 0;
-      padding: 0;
-    }
-    header {
       padding: 1rem;
-      text-align: center;
-      background-color: #282828;
-      font-size: 1.5rem;
     }
-    .gallery {
+
+    h1 {
+      margin-bottom: 1rem;
+    }
+
+    #uploadContainer {
+      margin-bottom: 2rem;
+    }
+
+    #skinGrid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
       gap: 10px;
-      padding: 10px;
     }
-    .skin-item {
-      background-color: #2e2e2e;
+
+    .skinItem {
+      width: 80px;
+      height: 80px;
+      overflow: hidden;
+      background: #222;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       border-radius: 8px;
-      padding: 10px;
-      text-align: center;
       cursor: pointer;
     }
-    .skin-item img {
-      width: 64px;
-      height: 64px;
+
+    .skinItem img {
+      height: 100%;
+      width: auto;
       object-fit: contain;
-      image-rendering: pixelated;
     }
-    #modal {
+
+    /* Modal */
+    #skinModal {
       display: none;
       position: fixed;
-      top: 0;
-      left: 0;
+      top: 0; left: 0;
       width: 100vw;
       height: 100vh;
-      background-color: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.8);
       justify-content: center;
       align-items: center;
       z-index: 1000;
     }
-    #modal-content {
-      background-color: #333;
-      padding: 20px;
-      border-radius: 10px;
+
+    #modalContent {
+      background: #222;
       display: flex;
-      gap: 20px;
-      align-items: center;
+      padding: 1rem;
+      border-radius: 10px;
+      max-width: 600px;
+      width: 90%;
     }
-    #preview-img {
-      width: 128px;
+
+    #modalLeft img {
+      max-width: 200px;
       height: auto;
-      image-rendering: pixelated;
     }
-    #modal-buttons {
+
+    #modalRight {
+      margin-left: 2rem;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      justify-content: space-between;
     }
-    button {
-      padding: 8px 12px;
-      background-color: #444;
+
+    .modalButton {
+      background: #444;
       color: white;
       border: none;
+      padding: 0.5rem 1rem;
+      margin-top: 0.5rem;
       border-radius: 5px;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #666;
+
+    .modalButton:hover {
+      background: #666;
     }
-    #upload-container {
-      padding: 1rem;
-      text-align: center;
+
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <header>Minecraft Skins Galerie</header>
 
-  <div id="upload-container">
-    <input type="file" id="fileInput" accept="image/png" />
-    <input type="text" id="skinName" placeholder="Name des Skins" />
+  <h1>Minecraft Skins</h1>
+
+  <!-- Nur du siehst das hier -->
+  <div id="uploadContainer">
+    <input type="file" id="skinInput" accept="image/png">
+    <input type="text" id="skinName" placeholder="Name eingeben">
     <button onclick="uploadSkin()">Hochladen</button>
   </div>
 
-  <div class="gallery" id="gallery"></div>
+  <div id="skinGrid"></div>
 
-  <div id="modal">
-    <div id="modal-content">
-      <img id="preview-img" src="" alt="Skin Preview">
-      <div id="modal-buttons">
-        <div id="preview-name"></div>
-        <button onclick="downloadSkin()">Download</button>
-        <button onclick="deleteSkin()">Löschen</button>
-        <button onclick="closeModal()">Schließen</button>
+  <!-- Modal -->
+  <div id="skinModal">
+    <div id="modalContent">
+      <div id="modalLeft">
+        <img id="modalImage" src="" alt="Skin">
+      </div>
+      <div id="modalRight">
+        <div id="modalName">Skinname</div>
+        <button class="modalButton" id="downloadBtn">Download</button>
+        <button class="modalButton hidden" id="deleteBtn">Löschen</button>
+        <button class="modalButton" onclick="closeModal()">Schließen</button>
       </div>
     </div>
   </div>
 
   <script>
-    let selectedSkinIndex = null;
+    const skinGrid = document.getElementById("skinGrid");
+    const skinInput = document.getElementById("skinInput");
+    const skinNameInput = document.getElementById("skinName");
+    const modal = document.getElementById("skinModal");
+    const modalImage = document.getElementById("modalImage");
+    const modalName = document.getElementById("modalName");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const deleteBtn = document.getElementById("deleteBtn");
+
+    let currentSkinElement = null;
+    const isAdmin = true; // <-- Nur DU darfst löschen/hochladen
 
     function uploadSkin() {
-      const input = document.getElementById("fileInput");
-      const name = document.getElementById("skinName").value || "Unbenannt";
+      const file = skinInput.files[0];
+      const name = skinNameInput.value || "Unbenannt";
 
-      if (input.files.length === 0) return;
+      if (!file || file.type !== "image/png") {
+        alert("Bitte wähle eine PNG-Datei aus.");
+        return;
+      }
 
-      const file = input.files[0];
       const reader = new FileReader();
-
-      reader.onload = function (e) {
-        const gallery = document.getElementById("gallery");
-        const div = document.createElement("div");
-        div.className = "skin-item";
-
+      reader.onload = function(e) {
+        const skinDiv = document.createElement("div");
+        skinDiv.className = "skinItem";
         const img = document.createElement("img");
         img.src = e.target.result;
         img.alt = name;
+        skinDiv.appendChild(img);
+        skinDiv.dataset.name = name;
+        skinDiv.dataset.src = e.target.result;
 
-        div.onclick = function () {
-          selectedSkinIndex = Array.from(gallery.children).indexOf(div);
-          document.getElementById("preview-img").src = e.target.result;
-          document.getElementById("preview-name").textContent = name;
-          document.getElementById("modal").style.display = "flex";
-        };
-
-        div.appendChild(img);
-        gallery.appendChild(div);
-
-        input.value = "";
-        document.getElementById("skinName").value = "";
+        skinDiv.addEventListener("click", () => openModal(skinDiv));
+        skinGrid.appendChild(skinDiv);
       };
-
       reader.readAsDataURL(file);
     }
 
-    function closeModal() {
-      document.getElementById("modal").style.display = "none";
-    }
+    function openModal(skinDiv) {
+      currentSkinElement = skinDiv;
+      modalImage.src = skinDiv.dataset.src;
+      modalName.textContent = skinDiv.dataset.name;
+      downloadBtn.onclick = () => downloadSkin(skinDiv.dataset.src, skinDiv.dataset.name + ".png");
 
-    function downloadSkin() {
-      const link = document.createElement("a");
-      link.href = document.getElementById("preview-img").src;
-      link.download = document.getElementById("preview-name").textContent + ".png";
-      link.click();
-    }
-
-    function deleteSkin() {
-      if (selectedSkinIndex !== null) {
-        const gallery = document.getElementById("gallery");
-        gallery.removeChild(gallery.children[selectedSkinIndex]);
-        closeModal();
+      if (isAdmin) {
+        deleteBtn.classList.remove("hidden");
+        deleteBtn.onclick = () => {
+          skinGrid.removeChild(skinDiv);
+          closeModal();
+        };
+      } else {
+        deleteBtn.classList.add("hidden");
       }
+
+      modal.style.display = "flex";
+    }
+
+    function closeModal() {
+      modal.style.display = "none";
+    }
+
+    function downloadSkin(url, filename) {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
     }
   </script>
 </body>
