@@ -1,37 +1,31 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Minecraft Skins</title>
   <style>
     body {
       font-family: sans-serif;
       background: #111;
       color: #fff;
-      margin: 0;
-      padding: 0;
       text-align: center;
-    }
-    h1 {
       padding: 20px;
-      font-size: 2.5em;
     }
     #uploadSection {
       display: none;
-      margin: 20px auto;
+      margin-bottom: 20px;
     }
-    input[type="text"], input[type="file"] {
+    input, button {
       padding: 10px;
-      margin: 10px;
+      margin: 5px;
       font-size: 1.2em;
     }
     #gallery {
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
       gap: 24px;
-      padding: 20px;
+      justify-content: center;
     }
     .skin-box {
       width: 160px;
@@ -42,7 +36,6 @@
       justify-content: center;
       border-radius: 8px;
       cursor: pointer;
-      position: relative;
     }
     .skin-box img {
       width: 128px;
@@ -57,33 +50,26 @@
       background: rgba(0, 0, 0, 0.9);
       justify-content: center;
       align-items: center;
-      z-index: 999;
     }
     .modal-content {
       background: #222;
       padding: 20px;
       border-radius: 10px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 20px;
     }
     .modal-content img {
       width: 256px;
       height: 128px;
       object-fit: contain;
-      background: #333;
     }
     .modal-buttons {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
+      margin-top: 20px;
     }
     .modal-buttons button {
-      padding: 6px 12px;
-      cursor: pointer;
-      border: none;
-      border-radius: 4px;
+      padding: 8px 16px;
+      margin: 5px;
     }
     .delete-button {
       background: #c00;
@@ -103,8 +89,8 @@
   <h1>Minecraft Skins</h1>
 
   <div id="uploadSection">
-    <input type="text" id="skinNameInput" placeholder="Skin-Name" />
-    <input type="file" id="skinFileInput" accept="image/png" />
+    <input type="text" id="skinNameInput" placeholder="Skin-Name">
+    <input type="file" id="skinFileInput" accept="image/png">
     <button onclick="uploadSkin()">Hochladen</button>
   </div>
 
@@ -112,7 +98,7 @@
 
   <div id="modal" class="modal" onclick="closeModal(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
-      <img id="modalImage" />
+      <img id="modalImage">
       <div class="modal-buttons">
         <div id="modalSkinName" style="color: white; font-weight: bold;"></div>
         <button class="download-button" onclick="downloadSkin()">Download</button>
@@ -124,7 +110,7 @@
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const isAdmin = urlParams.get('admin') === '1'; // Admin-Check anhand des URL-Parameters
+    const isAdmin = urlParams.get('admin') === '1';
     const uploadSection = document.getElementById("uploadSection");
     const gallery = document.getElementById("gallery");
     const modal = document.getElementById("modal");
@@ -146,8 +132,8 @@
         skins.push({ name, data: reader.result });
         localStorage.setItem("skins", JSON.stringify(skins));
         renderGallery();
-        fileInput.value = "";
         document.getElementById("skinNameInput").value = "";
+        fileInput.value = "";
       };
       reader.readAsDataURL(file);
     }
@@ -201,7 +187,7 @@
     }
 
     window.onload = () => {
-      if (isAdmin) uploadSection.style.display = "block"; // Admin-Uploadbereich anzeigen
+      if (isAdmin) uploadSection.style.display = "block";
       renderGallery();
     };
   </script>
