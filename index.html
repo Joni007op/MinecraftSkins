@@ -1,117 +1,66 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Skins</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #111;
-      color: #fff;
-      text-align: center;
-      padding: 20px;
-    }
-    #uploadSection {
-      margin-bottom: 20px;
-    }
-    input, button {
-      padding: 10px;
-      margin: 5px;
-      font-size: 1.2em;
-    }
-    #gallery {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 24px;
-      justify-content: center;
-    }
-    .skin-box {
-      width: 160px;
-      height: 160px;
-      background-color: #222;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .skin-box img {
-      width: 128px;
-      height: 128px;
-      object-fit: contain;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meine Webseite</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; padding: 10px; }
+        h1, h2 { color: #333; }
+        .container { max-width: 800px; margin: auto; }
+        .admin-panel { background: #f4f4f4; padding: 15px; border-radius: 5px; margin-top: 20px; }
+    </style>
 </head>
 <body>
-  <h1>Minecraft Skins</h1>
+    <div class="container">
+        <h1>Willkommen auf meiner Webseite</h1>
+        <p>Diese Webseite bietet eine Admin-Ansicht zur Verwaltung von Bildern.</p>
 
-  <div id="uploadSection">
-    <input type="text" id="skinNameInput" placeholder="Skin-Name">
-    <input type="file" id="skinFileInput" accept="image/png">
-    <button onclick="uploadSkin()">Hochladen</button>
-  </div>
+        <section class="admin-panel">
+            <h2>Admin-Ansicht</h2>
 
-  <div id="gallery"></div>
+            <label for="previewImage">Vorschau-Bild wählen:</label>
+            <input type="file" id="previewImage" accept="image/*">
+            <button onclick="setPreviewImage()">Setzen</button>
 
-  <script>
-    function uploadSkin() {
-      const name = document.getElementById("skinNameInput").value.trim();
-      const fileInput = document.getElementById("skinFileInput");
-      const file = fileInput.files[0];
-      if (!name || !file) return;
+            <br><br>
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        const imageData = reader.result;
+            <label for="downloadImage">Download-Bild wählen:</label>
+            <input type="file" id="downloadImage" accept="image/*">
+            <button onclick="setDownloadImage()">Setzen</button>
+        </section>
+        
+        <h2>Vorschau-Bild</h2>
+        <img id="previewDisplay" src="" alt="Noch kein Vorschau-Bild gewählt" style="max-width: 100%;">
 
-        // Automatische Umwandlung ins Minecraft-Skin-Format
-        const canvas = document.createElement("canvas");
-        canvas.width = 64;
-        canvas.height = 64;
-        const ctx = canvas.getContext("2d");
+        <h2>Download-Bild</h2>
+        <a id="downloadLink" href="#" download="downloadbild.png">Noch kein Bild zum Download festgelegt</a>
+    </div>
 
-        const img = new Image();
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0, 64, 64);
-          const formattedSkin = canvas.toDataURL("image/png");
+    <script>
+        function setPreviewImage() {
+            let file = document.getElementById('previewImage').files[0];
+            if (file) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('previewDisplay').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
 
-          const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-          skins.push({ name, data: formattedSkin });
-          localStorage.setItem("skins", JSON.stringify(skins));
-          renderGallery();
-        };
-        img.src = imageData;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function renderGallery() {
-      const gallery = document.getElementById("gallery");
-      gallery.innerHTML = "";
-      const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-      skins.forEach((skin, index) => {
-        const div = document.createElement("div");
-        div.className = "skin-box";
-        const img = document.createElement("img");
-        img.src = skin.data;
-        img.alt = skin.name;
-        div.appendChild(img);
-        div.onclick = () => downloadSkin(index);
-        gallery.appendChild(div);
-      });
-    }
-
-    function downloadSkin(index) {
-      const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-      const skin = skins[index];
-      const a = document.createElement("a");
-      a.href = skin.data;
-      a.download = skin.name + ".png";
-      a.click();
-    }
-
-    window.onload = renderGallery;
-  </script>
+        function setDownloadImage() {
+            let file = document.getElementById('downloadImage').files[0];
+            if (file) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let link = document.getElementById('downloadLink');
+                    link.href = e.target.result;
+                    link.innerText = "Download Bild";
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
 </body>
 </html>
