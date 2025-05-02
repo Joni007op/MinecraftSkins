@@ -13,7 +13,6 @@
       padding: 20px;
     }
     #uploadSection {
-      display: none;
       margin-bottom: 20px;
     }
     input, button {
@@ -39,49 +38,8 @@
     }
     .skin-box img {
       width: 128px;
-      height: 64px;
-      object-fit: contain;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.9);
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-content {
-      background: #222;
-      padding: 20px;
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .modal-content img {
-      width: 256px;
       height: 128px;
       object-fit: contain;
-    }
-    .modal-buttons {
-      margin-top: 20px;
-    }
-    .modal-buttons button {
-      padding: 8px 16px;
-      margin: 5px;
-    }
-    .delete-button {
-      background: #c00;
-      color: #fff;
-    }
-    .download-button {
-      background: #0c0;
-      color: #000;
-    }
-    .close-button {
-      background: #666;
-      color: #fff;
     }
   </style>
 </head>
@@ -96,30 +54,7 @@
 
   <div id="gallery"></div>
 
-  <div id="modal" class="modal" onclick="closeModal(event)">
-    <div class="modal-content" onclick="event.stopPropagation()">
-      <img id="modalImage">
-      <div class="modal-buttons">
-        <div id="modalSkinName" style="color: white; font-weight: bold;"></div>
-        <button class="download-button" onclick="downloadSkin()">Download</button>
-        <button id="deleteButton" class="delete-button" onclick="deleteSkin()">Löschen</button>
-        <button class="close-button" onclick="closeModal()">Schließen</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const isAdmin = urlParams.get('admin') === '1';
-    const uploadSection = document.getElementById("uploadSection");
-    const gallery = document.getElementById("gallery");
-    const modal = document.getElementById("modal");
-    const modalImage = document.getElementById("modalImage");
-    const modalSkinName = document.getElementById("modalSkinName");
-    const deleteButton = document.getElementById("deleteButton");
-
-    let currentSkinIndex = null;
-
     function uploadSkin() {
       const name = document.getElementById("skinNameInput").value.trim();
       const fileInput = document.getElementById("skinFileInput");
@@ -128,17 +63,31 @@
 
       const reader = new FileReader();
       reader.onload = () => {
-        const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-        skins.push({ name, data: reader.result });
-        localStorage.setItem("skins", JSON.stringify(skins));
-        renderGallery();
-        document.getElementById("skinNameInput").value = "";
-        fileInput.value = "";
+        const imageData = reader.result;
+
+        // Automatische Umwandlung ins Minecraft-Skin-Format
+        const canvas = document.createElement("canvas");
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext("2d");
+
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, 64, 64);
+          const formattedSkin = canvas.toDataURL("image/png");
+
+          const skins = JSON.parse(localStorage.getItem("skins") || "[]");
+          skins.push({ name, data: formattedSkin });
+          localStorage.setItem("skins", JSON.stringify(skins));
+          renderGallery();
+        };
+        img.src = imageData;
       };
       reader.readAsDataURL(file);
     }
 
     function renderGallery() {
+      const gallery = document.getElementById("gallery");
       gallery.innerHTML = "";
       const skins = JSON.parse(localStorage.getItem("skins") || "[]");
       skins.forEach((skin, index) => {
@@ -148,48 +97,21 @@
         img.src = skin.data;
         img.alt = skin.name;
         div.appendChild(img);
-        div.onclick = () => openModal(index);
+        div.onclick = () => downloadSkin(index);
         gallery.appendChild(div);
       });
     }
 
-    function openModal(index) {
+    function downloadSkin(index) {
       const skins = JSON.parse(localStorage.getItem("skins") || "[]");
       const skin = skins[index];
-      modalImage.src = skin.data;
-      modalSkinName.innerText = skin.name;
-      modal.style.display = "flex";
-      currentSkinIndex = index;
-      deleteButton.style.display = isAdmin ? "block" : "none";
-    }
-
-    function closeModal() {
-      modal.style.display = "none";
-    }
-
-    function deleteSkin() {
-      const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-      if (currentSkinIndex !== null) {
-        skins.splice(currentSkinIndex, 1);
-        localStorage.setItem("skins", JSON.stringify(skins));
-        renderGallery();
-        closeModal();
-      }
-    }
-
-    function downloadSkin() {
-      const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-      const skin = skins[currentSkinIndex];
       const a = document.createElement("a");
       a.href = skin.data;
       a.download = skin.name + ".png";
       a.click();
     }
 
-    window.onload = () => {
-      if (isAdmin) uploadSection.style.display = "block";
-      renderGallery();
-    };
+    window.onload = renderGallery;
   </script>
 </body>
 </html>
