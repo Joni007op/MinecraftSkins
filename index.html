@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Minecraft Skins</title>
   <style>
     body {
@@ -46,44 +46,52 @@
 <body>
   <h1>Minecraft Skins</h1>
 
-  <div id="uploadSection">
+  <div id="uploadSection" style="display:none;">
     <input type="text" id="skinNameInput" placeholder="Skin-Name">
-    <input type="file" id="skinFileInput" accept="image/png">
+    <br>
+    <label>Skin-Anzeige (Galerie):</label>
+    <input type="file" id="displaySkinInput" accept="image/png">
+    <br>
+    <label>Download-Datei:</label>
+    <input type="file" id="downloadSkinInput" accept="image/png">
+    <br>
     <button onclick="uploadSkin()">Hochladen</button>
   </div>
 
   <div id="gallery"></div>
 
   <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdmin = urlParams.get("admin") === "1";
+
+    if (isAdmin) {
+      document.getElementById("uploadSection").style.display = "block";
+    }
+
     function uploadSkin() {
       const name = document.getElementById("skinNameInput").value.trim();
-      const fileInput = document.getElementById("skinFileInput");
-      const file = fileInput.files[0];
-      if (!name || !file) return;
+      const displayFile = document.getElementById("displaySkinInput").files[0];
+      const downloadFile = document.getElementById("downloadSkinInput").files[0];
+      if (!name || !displayFile || !downloadFile) return;
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        const imageData = reader.result;
+      const readerDisplay = new FileReader();
+      const readerDownload = new FileReader();
 
-        // Automatische Umwandlung ins Minecraft-Skin-Format
-        const canvas = document.createElement("canvas");
-        canvas.width = 64;
-        canvas.height = 64;
-        const ctx = canvas.getContext("2d");
+      readerDisplay.onload = () => {
+        const displayData = readerDisplay.result;
 
-        const img = new Image();
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0, 64, 64);
-          const formattedSkin = canvas.toDataURL("image/png");
+        readerDownload.onload = () => {
+          const downloadData = readerDownload.result;
 
           const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-          skins.push({ name, data: formattedSkin });
+          skins.push({ name, displayData, downloadData });
           localStorage.setItem("skins", JSON.stringify(skins));
           renderGallery();
         };
-        img.src = imageData;
+        readerDownload.readAsDataURL(downloadFile);
       };
-      reader.readAsDataURL(file);
+
+      readerDisplay.readAsDataURL(displayFile);
     }
 
     function renderGallery() {
@@ -94,7 +102,7 @@
         const div = document.createElement("div");
         div.className = "skin-box";
         const img = document.createElement("img");
-        img.src = skin.data;
+        img.src = skin.displayData;
         img.alt = skin.name;
         div.appendChild(img);
         div.onclick = () => downloadSkin(index);
@@ -106,7 +114,7 @@
       const skins = JSON.parse(localStorage.getItem("skins") || "[]");
       const skin = skins[index];
       const a = document.createElement("a");
-      a.href = skin.data;
+      a.href = skin.downloadData;
       a.download = skin.name + ".png";
       a.click();
     }
