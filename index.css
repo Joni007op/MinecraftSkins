@@ -1,0 +1,9 @@
+.skin-image {
+  width: 128px;       /* doppelt so groß wie 64px */
+  height: 128px;      /* gleichmäßig skaliert, quadratisch */
+  image-rendering: pixelated; /* damit es nicht verschwommen aussieht */
+  object-fit: contain; /* alles im Rahmen */
+  border: 1px solid #444;
+  background: #222;
+  margin: 5px;
+}
