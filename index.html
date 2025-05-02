@@ -41,6 +41,25 @@
       height: 128px;
       object-fit: contain;
     }
+    #modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 10;
+    }
+    #modal img {
+      width: 256px;
+      height: 256px;
+      margin-bottom: 20px;
+    }
+    #modal button {
+      margin: 5px;
+    }
   </style>
 </head>
 <body>
@@ -60,12 +79,21 @@
 
   <div id="gallery"></div>
 
+  <div id="modal">
+    <img id="modalImg" src="" alt="Skin">
+    <p id="modalName"></p>
+    <button id="downloadBtn">Download</button>
+    <button id="closeBtn">Schließen</button>
+    <button id="deleteBtn" style="display:none; background-color: red;">Löschen</button>
+  </div>
+
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = urlParams.get("admin") === "1";
 
+    const uploadSection = document.getElementById("uploadSection");
     if (isAdmin) {
-      document.getElementById("uploadSection").style.display = "block";
+      uploadSection.style.display = "block";
     }
 
     function uploadSkin() {
@@ -105,18 +133,39 @@
         img.src = skin.displayData;
         img.alt = skin.name;
         div.appendChild(img);
-        div.onclick = () => downloadSkin(index);
+        div.onclick = () => openModal(index);
         gallery.appendChild(div);
       });
     }
 
-    function downloadSkin(index) {
+    function openModal(index) {
       const skins = JSON.parse(localStorage.getItem("skins") || "[]");
       const skin = skins[index];
-      const a = document.createElement("a");
-      a.href = skin.downloadData;
-      a.download = skin.name + ".png";
-      a.click();
+      const modal = document.getElementById("modal");
+      document.getElementById("modalImg").src = skin.displayData;
+      document.getElementById("modalName").innerText = skin.name;
+      document.getElementById("downloadBtn").onclick = () => {
+        const a = document.createElement("a");
+        a.href = skin.downloadData;
+        a.download = skin.name + ".png";
+        a.click();
+      };
+      document.getElementById("closeBtn").onclick = () => {
+        modal.style.display = "none";
+      };
+      if (isAdmin) {
+        const deleteBtn = document.getElementById("deleteBtn");
+        deleteBtn.style.display = "inline-block";
+        deleteBtn.onclick = () => {
+          skins.splice(index, 1);
+          localStorage.setItem("skins", JSON.stringify(skins));
+          modal.style.display = "none";
+          renderGallery();
+        };
+      } else {
+        document.getElementById("deleteBtn").style.display = "none";
+      }
+      modal.style.display = "flex";
     }
 
     window.onload = renderGallery;
