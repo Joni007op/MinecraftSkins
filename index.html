@@ -96,91 +96,15 @@
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const isAdmin = urlParams.get("admin") === "1";
+    const isAdmin = urlParams.get("admin") === "1"; // Admin-Status prüfen
 
     const uploadSection = document.getElementById("uploadSection");
     const modal = document.getElementById("modal");
 
-    // Anzeigen der Upload-Section für Admins
+    // Wenn der Admin-Parameter gesetzt ist, wird die Upload-Section angezeigt
     if (isAdmin) {
       uploadSection.style.display = "block";
     }
 
-    function uploadSkin() {
-      const name = document.getElementById("skinNameInput").value.trim();
-      const displayFile = document.getElementById("displaySkinInput").files[0];
-      const downloadFile = document.getElementById("downloadSkinInput").files[0];
-      if (!name || !displayFile || !downloadFile) return;
-
-      const readerDisplay = new FileReader();
-      const readerDownload = new FileReader();
-
-      readerDisplay.onload = () => {
-        const displayData = readerDisplay.result;
-
-        readerDownload.onload = () => {
-          const downloadData = readerDownload.result;
-
-          const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-          skins.push({ name, displayData, downloadData });
-          localStorage.setItem("skins", JSON.stringify(skins));
-          renderGallery();
-        };
-        readerDownload.readAsDataURL(downloadFile);
-      };
-
-      readerDisplay.readAsDataURL(displayFile);
-    }
-
-    function renderGallery() {
-      const gallery = document.getElementById("gallery");
-      gallery.innerHTML = "";
-      const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-      skins.forEach((skin, index) => {
-        const div = document.createElement("div");
-        div.className = "skin-box";
-        const img = document.createElement("img");
-        img.src = skin.displayData;
-        img.alt = skin.name;
-        div.appendChild(img);
-        div.onclick = () => openModal(index);
-        gallery.appendChild(div);
-      });
-    }
-
-    function openModal(index) {
-      const skins = JSON.parse(localStorage.getItem("skins") || "[]");
-      const skin = skins[index];
-      document.getElementById("modalImg").src = skin.displayData;
-      document.getElementById("modalName").innerText = skin.name;
-      document.getElementById("downloadBtn").onclick = () => {
-        const a = document.createElement("a");
-        a.href = skin.downloadData;
-        a.download = skin.name + ".png";
-        a.click();
-      };
-      document.getElementById("closeBtn").onclick = () => {
-        modal.style.display = "none";
-      };
-
-      // Admin-Check für Löschen-Button
-      if (isAdmin) {
-        const deleteBtn = document.getElementById("deleteBtn");
-        deleteBtn.style.display = "inline-block";
-        deleteBtn.onclick = () => {
-          skins.splice(index, 1);
-          localStorage.setItem("skins", JSON.stringify(skins));
-          modal.style.display = "none";
-          renderGallery();
-        };
-      } else {
-        document.getElementById("deleteBtn").style.display = "none";
-      }
-
-      modal.style.display = "flex";
-    }
-
-    window.onload = renderGallery;
-  </script>
-</body>
-</html>
+    // Skin hochladen
+    function uploadSkin()
