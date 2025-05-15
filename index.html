@@ -2,12 +2,12 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Minecraft Skins Galerie – Kostenlos ansehen & herunterladen</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Minecraft Skins – Joni007</title>
 
-  <!-- SEO Meta-Tags -->
-  <meta name="description" content="Durchstöbere kostenlose Minecraft Skins – online ansehen, herunterladen oder verwalten. Einfach und ohne Anmeldung.">
-  <meta name="keywords" content="Minecraft Skins, Minecraft Skin Galerie, Minecraft Skin Download, kostenlose Minecraft Skins, Joni007OP">
+  <!-- Meta-Informationen für Suchmaschinen -->
+  <meta name="description" content="Lade eigene Minecraft Skins hoch, teile sie und lade Skins anderer Spieler herunter. Einfach, schnell und kostenlos – mit Joni007.">
+  <meta name="keywords" content="Minecraft Skins, Minecraft Skin Upload, Minecraft Skins downloaden, Minecraft Skin Galerie, Joni007 Skins">
   <meta name="author" content="Joni007OP">
   <meta name="robots" content="index, follow">
 
@@ -70,8 +70,7 @@
   </style>
 </head>
 <body>
-  <h1>Minecraft Skins – Galerie & Download</h1>
-  <p>Wähle aus verschiedenen Minecraft-Skins. Als Admin kannst du Skins hochladen oder löschen.</p>
+  <h1>Minecraft Skins</h1>
 
   <div id="uploadSection" style="display:none;">
     <input type="text" id="skinNameInput" placeholder="Skin-Name">
@@ -100,6 +99,9 @@
     const isAdmin = urlParams.get("admin") === "1";
 
     const uploadSection = document.getElementById("uploadSection");
+    const modal = document.getElementById("modal");
+
+    // Anzeigen der Upload-Section für Admins
     if (isAdmin) {
       uploadSection.style.display = "block";
     }
@@ -149,7 +151,6 @@
     function openModal(index) {
       const skins = JSON.parse(localStorage.getItem("skins") || "[]");
       const skin = skins[index];
-      const modal = document.getElementById("modal");
       document.getElementById("modalImg").src = skin.displayData;
       document.getElementById("modalName").innerText = skin.name;
       document.getElementById("downloadBtn").onclick = () => {
@@ -161,6 +162,8 @@
       document.getElementById("closeBtn").onclick = () => {
         modal.style.display = "none";
       };
+
+      // Admin-Check für Löschen-Button
       if (isAdmin) {
         const deleteBtn = document.getElementById("deleteBtn");
         deleteBtn.style.display = "inline-block";
@@ -173,6 +176,7 @@
       } else {
         document.getElementById("deleteBtn").style.display = "none";
       }
+
       modal.style.display = "flex";
     }
 
