@@ -1,30 +1,47 @@
 <script>
   const urlParams = new URLSearchParams(window.location.search);
-  const isAdmin = urlParams.get("admin") === "1";
+  const isAdmin = urlParams.get("admin") === "1"; // Check if admin parameter is set to 1
 
   const uploadSection = document.getElementById("uploadSection");
   const modal = document.getElementById("modal");
 
+  // Anzeigen der Upload-Section für Admins
   if (isAdmin) {
     uploadSection.style.display = "block";
   }
 
-  async function loadSkins() {
-    try {
-      const response = await fetch("https://joni007op.github.io/MinecraftSkins/skins.json");
-      if (!response.ok) throw new Error("Datei konnte nicht geladen werden.");
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Fehler beim Laden der Skins:", error);
-      return [];
-    }
+  // Funktion, um ein Skin hochzuladen
+  function uploadSkin() {
+    const name = document.getElementById("skinNameInput").value.trim();
+    const displayFile = document.getElementById("displaySkinInput").files[0];
+    const downloadFile = document.getElementById("downloadSkinInput").files[0];
+    if (!name || !displayFile || !downloadFile) return;
+
+    const readerDisplay = new FileReader();
+    const readerDownload = new FileReader();
+
+    readerDisplay.onload = () => {
+      const displayData = readerDisplay.result;
+
+      readerDownload.onload = () => {
+        const downloadData = readerDownload.result;
+
+        const skins = JSON.parse(localStorage.getItem("skins") || "[]");
+        skins.push({ name, displayData, downloadData });
+        localStorage.setItem("skins", JSON.stringify(skins));
+        renderGallery();
+      };
+      readerDownload.readAsDataURL(downloadFile);
+    };
+
+    readerDisplay.readAsDataURL(displayFile);
   }
 
-  async function renderGallery() {
+  // Funktion, um die Galerie anzuzeigen
+  function renderGallery() {
     const gallery = document.getElementById("gallery");
     gallery.innerHTML = "";
-    const skins = await loadSkins();
+    const skins = JSON.parse(localStorage.getItem("skins") || "[]");
     skins.forEach((skin, index) => {
       const div = document.createElement("div");
       div.className = "skin-box";
@@ -32,12 +49,14 @@
       img.src = skin.displayData;
       img.alt = skin.name;
       div.appendChild(img);
-      div.onclick = () => openModal(skins, index);
+      div.onclick = () => openModal(index);
       gallery.appendChild(div);
     });
   }
 
-  function openModal(skins, index) {
+  // Funktion, um das Modal mit den Skin-Details zu öffnen
+  function openModal(index) {
+    const skins = JSON.parse(localStorage.getItem("skins") || "[]");
     const skin = skins[index];
     document.getElementById("modalImg").src = skin.displayData;
     document.getElementById("modalName").innerText = skin.name;
@@ -50,9 +69,24 @@
     document.getElementById("closeBtn").onclick = () => {
       modal.style.display = "none";
     };
-    document.getElementById("deleteBtn").style.display = "none";
+
+    if (isAdmin) {
+      const deleteBtn = document.getElementById("deleteBtn");
+      deleteBtn.style.display = "inline-block";
+      deleteBtn.onclick = () => {
+        const skins = JSON.parse(localStorage.getItem("skins") || "[]");
+        skins.splice(index, 1);
+        localStorage.setItem("skins", JSON.stringify(skins));
+        modal.style.display = "none";
+        renderGallery();
+      };
+    } else {
+      document.getElementById("deleteBtn").style.display = "none";
+    }
+
     modal.style.display = "flex";
   }
 
+  // Beim Laden der Seite die Galerie rendern
   window.onload = renderGallery;
 </script>
