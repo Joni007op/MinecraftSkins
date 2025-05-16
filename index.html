@@ -189,3 +189,100 @@
   </script>
 </body>
 </html>
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdmin = urlParams.get("admin") === "1";
+
+  const uploadSection = document.getElementById("uploadSection");
+  const modal = document.getElementById("modal");
+
+  if (isAdmin) uploadSection.style.display = "block";
+
+  let skins = [];
+
+  async function loadSkins() {
+    try {
+      const res = await fetch(
+        "https://raw.githubusercontent.com/joni007op/MinecraftSkins/main/skins.json"
+      );
+      if (!res.ok) throw new Error("skins.json nicht gefunden");
+      skins = await res.json();
+    } catch (err) {
+      console.error(err);
+      skins = [];
+    }
+    renderGallery();
+  }
+
+  function uploadSkin() {
+    const name = document.getElementById("skinNameInput").value.trim();
+    const displayFile = document.getElementById("displaySkinInput").files[0];
+    const downloadFile = document.getElementById("downloadSkinInput").files[0];
+    if (!name || !displayFile || !downloadFile) return;
+
+    const readerDisplay = new FileReader();
+    const readerDownload = new FileReader();
+
+    readerDisplay.onload = () => {
+      const displayData = readerDisplay.result;
+
+      readerDownload.onload = () => {
+        const downloadData = readerDownload.result;
+
+        skins.push({ name, displayData, downloadData });
+        renderGallery();
+
+        alert(
+          "Skin nur lokal hinzugefügt.\n" +
+          "Damit alle ihn sehen, musst du das Objekt in skins.json eintragen und committen."
+        );
+      };
+      readerDownload.readAsDataURL(downloadFile);
+    };
+    readerDisplay.readAsDataURL(displayFile);
+  }
+
+  function renderGallery() {
+    const gallery = document.getElementById("gallery");
+    gallery.innerHTML = "";
+    skins.forEach((skin, index) => {
+      const box = document.createElement("div");
+      box.className = "skin-box";
+      box.innerHTML = `<img src="${skin.displayData}" alt="${skin.name}">`;
+      box.onclick = () => openModal(index);
+      gallery.appendChild(box);
+    });
+  }
+
+  function openModal(idx) {
+    const skin = skins[idx];
+    document.getElementById("modalImg").src = skin.displayData;
+    document.getElementById("modalName").innerText = skin.name;
+    document.getElementById("downloadBtn").onclick = () => {
+      const a = document.createElement("a");
+      a.href = skin.downloadData;
+      a.download = skin.name + ".png";
+      a.click();
+    };
+    document.getElementById("closeBtn").onclick = () => (modal.style.display = "none");
+
+    const delBtn = document.getElementById("deleteBtn");
+    if (isAdmin) {
+      delBtn.style.display = "inline-block";
+      delBtn.onclick = () => {
+        skins.splice(idx, 1);
+        renderGallery();
+        modal.style.display = "none";
+        alert(
+          "Skin nur lokal gelöscht.\n" +
+          "Für alle löschen → Eintrag aus skins.json entfernen und committen."
+        );
+      };
+    } else delBtn.style.display = "none";
+
+    modal.style.display = "flex";
+  }
+
+  window.onload = loadSkins;
+</script>
+
