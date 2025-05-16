@@ -19,7 +19,7 @@
     input, button {
       padding: 10px;
       margin: 5px;
-      font-size: 1.2em;
+      font-size: 1.1em;
     }
     #gallery {
       display: flex;
@@ -91,10 +91,20 @@
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzYm5xenFqZHl0Y2NteHJwc3ZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDMzNzEsImV4cCI6MjA2Mjk3OTM3MX0.GJNGbgIUekRmdTWCYlVUL9hmzqbkJjdz6FZjqgKDNx4";
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    const isAdmin = new URLSearchParams(window.location.search).get("admin") === "1";
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdmin = urlParams.get("admin") === "1";
 
     if (isAdmin) {
       document.getElementById("uploadSection").style.display = "block";
+    }
+
+    async function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
     }
 
     async function uploadSkin() {
@@ -110,32 +120,23 @@
       renderGallery();
     }
 
-    function toBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
     async function renderGallery() {
       const gallery = document.getElementById("gallery");
       gallery.innerHTML = "";
       const { data: skins } = await supabase.from("skins").select("*");
-      skins.forEach((skin, index) => {
+      skins.forEach((skin) => {
         const div = document.createElement("div");
         div.className = "skin-box";
         const img = document.createElement("img");
         img.src = skin.displayData;
         img.alt = skin.name;
         div.appendChild(img);
-        div.onclick = () => openModal(skin, index);
+        div.onclick = () => openModal(skin);
         gallery.appendChild(div);
       });
     }
 
-    async function openModal(skin, index) {
+    function openModal(skin) {
       const modal = document.getElementById("modal");
       document.getElementById("modalImg").src = skin.displayData;
       document.getElementById("modalName").innerText = skin.name;
