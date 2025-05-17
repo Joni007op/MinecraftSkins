@@ -65,7 +65,6 @@
 </head>
 <body>
   <h1>Minecraft Skins</h1>
-
   <div id="uploadSection" style="display:none;">
     <input type="text" id="skinNameInput" placeholder="Skin-Name"><br>
     <label>Skin-Anzeige (Galerie):</label>
@@ -85,87 +84,102 @@
     <button id="deleteBtn" style="display:none; background-color: red;">Löschen</button>
   </div>
 
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const isAdmin = urlParams.get("admin") === "1";
-    const uploadSection = document.getElementById("uploadSection");
-    if (isAdmin) uploadSection.style.display = "block";
+<script>
+const SUPABASE_URL = "https://asbnqzqjdytccmxrpsvi.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzYm5xenFqZHl0Y2NteHJwc3ZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDMzNzEsImV4cCI6MjA2Mjk3OTM3MX0.GJNGbgIUekRmdTWCYlVUL9hmzqbkJjdz6FZjqgKDNx4";
 
-    const supabaseUrl = "https://asbnqzqjdytccmxrpsvi.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzYm5xenFqZHl0Y2NteHJwc3ZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0MDMzNzEsImV4cCI6MjA2Mjk3OTM3MX0.GJNGbgIUekRmdTWCYlVUL9hmzqbkJjdz6FZjqgKDNx4";
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    async function uploadSkin() {
-      const name = document.getElementById("skinNameInput").value.trim();
-      const displayFile = document.getElementById("displaySkinInput").files[0];
-      const downloadFile = document.getElementById("downloadSkinInput").files[0];
-      if (!name || !displayFile || !downloadFile) return;
+const urlParams = new URLSearchParams(window.location.search);
+const isAdmin = urlParams.get("admin") === "1";
+const uploadSection = document.getElementById("uploadSection");
+if (isAdmin) uploadSection.style.display = "block";
 
-      const reader1 = new FileReader();
-      reader1.onload = async () => {
-        const displayData = reader1.result;
-        const reader2 = new FileReader();
-        reader2.onload = async () => {
-          const downloadData = reader2.result;
-          await supabase.from("skins").insert([{ name, displayData, downloadData }]);
-          renderGallery();
-        };
-        reader2.readAsDataURL(downloadFile);
-      };
-      reader1.readAsDataURL(displayFile);
-    }
+async function uploadSkin() {
+  const name = document.getElementById("skinNameInput").value.trim();
+  const displayFile = document.getElementById("displaySkinInput").files[0];
+  const downloadFile = document.getElementById("downloadSkinInput").files[0];
+  if (!name || !displayFile || !downloadFile) return;
 
-    async function renderGallery() {
-      const { data: skins, error } = await supabase.from("skins").select("*");
+  const readerDisplay = new FileReader();
+  const readerDownload = new FileReader();
+
+  readerDisplay.onload = () => {
+    const displayData = readerDisplay.result;
+
+    readerDownload.onload = async () => {
+      const downloadData = readerDownload.result;
+
+      const { error } = await supabase.from("skins").insert([
+        { name, displayData, downloadData }
+      ]);
+
       if (error) {
-        console.error("Fehler beim Laden:", error);
-        return;
-      }
-
-      const gallery = document.getElementById("gallery");
-      gallery.innerHTML = "";
-
-      skins.forEach((skin, index) => {
-        const div = document.createElement("div");
-        div.className = "skin-box";
-        const img = document.createElement("img");
-        img.src = skin.displayData;
-        img.alt = skin.name;
-        div.appendChild(img);
-        div.onclick = () => openModal(skin, index);
-        gallery.appendChild(div);
-      });
-    }
-
-    async function openModal(skin, index) {
-      document.getElementById("modalImg").src = skin.displayData;
-      document.getElementById("modalName").innerText = skin.name;
-      document.getElementById("downloadBtn").onclick = () => {
-        const a = document.createElement("a");
-        a.href = skin.downloadData;
-        a.download = skin.name + ".png";
-        a.click();
-      };
-      document.getElementById("closeBtn").onclick = () => {
-        document.getElementById("modal").style.display = "none";
-      };
-
-      if (isAdmin) {
-        const deleteBtn = document.getElementById("deleteBtn");
-        deleteBtn.style.display = "inline-block";
-        deleteBtn.onclick = async () => {
-          await supabase.from("skins").delete().eq("name", skin.name);
-          document.getElementById("modal").style.display = "none";
-          renderGallery();
-        };
+        alert("Fehler beim Hochladen: " + error.message);
       } else {
-        document.getElementById("deleteBtn").style.display = "none";
+        renderGallery();
       }
+    };
+    readerDownload.readAsDataURL(downloadFile);
+  };
 
-      document.getElementById("modal").style.display = "flex";
-    }
+  readerDisplay.readAsDataURL(displayFile);
+}
 
-    window.onload = renderGallery;
-  </script>
+async function renderGallery() {
+  const gallery = document.getElementById("gallery");
+  gallery.innerHTML = "";
+
+  const { data: skins, error } = await supabase.from("skins").select("*");
+  if (error) {
+    gallery.innerHTML = "Fehler beim Laden der Skins.";
+    return;
+  }
+
+  skins.forEach((skin, index) => {
+    const div = document.createElement("div");
+    div.className = "skin-box";
+    const img = document.createElement("img");
+    img.src = skin.displayData;
+    img.alt = skin.name;
+    div.appendChild(img);
+    div.onclick = () => openModal(skin, index);
+    gallery.appendChild(div);
+  });
+}
+
+function openModal(skin, index) {
+  const modal = document.getElementById("modal");
+  document.getElementById("modalImg").src = skin.displayData;
+  document.getElementById("modalName").innerText = skin.name;
+
+  document.getElementById("downloadBtn").onclick = () => {
+    const a = document.createElement("a");
+    a.href = skin.downloadData;
+    a.download = skin.name + ".png";
+    a.click();
+  };
+
+  document.getElementById("closeBtn").onclick = () => {
+    modal.style.display = "none";
+  };
+
+  if (isAdmin) {
+    const deleteBtn = document.getElementById("deleteBtn");
+    deleteBtn.style.display = "inline-block";
+    deleteBtn.onclick = async () => {
+      await supabase.from("skins").delete().eq("id", skin.id);
+      modal.style.display = "none";
+      renderGallery();
+    };
+  } else {
+    document.getElementById("deleteBtn").style.display = "none";
+  }
+
+  modal.style.display = "flex";
+}
+
+window.onload = renderGallery;
+</script>
 </body>
 </html>
